@@ -1,0 +1,30 @@
+#!/bin/sh
+#PBS -N scat
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=32gb  
+#PBS -l walltime=20:00:00 
+#PBS -o logs/log.log  #  output log
+#PBS -e logs/error.log   # Error log
+#PBS -m ae 
+#PBS -M paola.vasquez@creatis.insa-lyon.fr
+
+# Move to the working directory
+cd $PBS_O_WORKDIR
+
+# Activate Conda  
+source ~/.bashrc
+conda activate newEnv 
+
+# Generate the scatterers from different models, especify the amount ot shapes to generate. For meshes and foreground scatterers, the number is already set. For Heart mesh, the maximum is 24.
+echo "Generating scatterers..."
+python generate_scatterers.py --chambers 50 --ellipsoids 50 --empty_ellipsoid 50 --heart_mesh 24
+
+# Generate the raw I/Q data with 9 DWs and 81DWs from the scatterers
+echo "Generating I/Q data..."
+for mode in empty_ellip three_ellip heart_mesh two_chamb; do
+  matlab -nodisplay -nosplash -batch "process_scatterers('$mode')" > logs/beamform_${mode}.log 2>&1
+done
+
+# Create the dataset in a h5 file using the beamformed data. It is posible to specify the number of files to include in the dataset.
+echo "Creating dataset..."
+python create_dataset.py --num_files 8
