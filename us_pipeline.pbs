@@ -28,3 +28,7 @@ done
 # Create the dataset in a h5 file using the beamformed data. It is posible to specify the number of files to include in the dataset.
 echo "Creating dataset..."
 python create_dataset.py --num_files 8
+
+# Deep learning training and testing
+echo "Training and testing the model..."
+python train_nn.py --config_path configs/Unet.yaml > logs/train_output.log 2>&1

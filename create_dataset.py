@@ -151,7 +151,7 @@ def main():
         print("No valid data found. Exiting.")
         return
     
-    train_paths, test_paths = train_test_split(all_paths, test_size=0.1, random_state=42)
+    train_paths, test_paths = train_test_split(all_paths, test_size=0.05, random_state=42)
 
     valid_train_count = create_h5_from_paths(train_paths, phase="train", output_dir=args.output_dir)
     valid_test_count = create_h5_from_paths(test_paths, phase="test", output_dir=args.output_dir)

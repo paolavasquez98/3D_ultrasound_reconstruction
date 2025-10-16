@@ -1,0 +1,43 @@
+model:
+  name: CxUnet_RB
+  args: {} # No specific args for now
+
+dataset:
+  train_path: dataset/*train.h5
+  test_path: dataset/*test.h5
+  normalization: std
+  patch_size: null
+  mode: train
+
+dataloader:
+  batch_size: 2
+  train_shuffle: true
+  val_shuffle: false
+  test_batch_size: 1
+  pin_memory: true
+  drop_last: true
+
+training:
+  epochs: 5
+  patience: 7
+  learning_rate: 1.0e-4
+  min_lr: 0.1e-6
+  optimizer: AdamW
+  optimizer_args:
+    weight_decay: 1.0e-4
+  scheduler: CosineAnnealingLR
+  scheduler_args:
+    T_max: ${training.epochs}
+    eta_min: ${training.min_lr}
+  criterion: ComplexMSETVLoss
+  criterion_args:
+    tv_weight: 0.01
+  accumulation_steps: 2
+
+wandb:
+  entity: paolavasquez98
+  project: us_reconstruction
+  dir: logs/wandb_logs
+  job_type: train-test
+  group: yaml_experiments
+  save_code: true
