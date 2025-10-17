@@ -221,6 +221,14 @@ def generate_mesh(vtk_file, variation_id, save_dir):
     """This one takes the vtk files as input"""
     mesh = pv.read(vtk_file)
     scatterers = mesh.points
+
+    n_points = scatterers.shape[0]
+    max_points = 1_000_000
+    # Randomly sample if there are more than max_points
+    if n_points > max_points:
+        idx = np.random.choice(n_points, max_points, replace=False)
+        scatterers = scatterers[idx]
+
     rc_values = np.random.uniform(0.2, 1.0, len(scatterers))
 
     # Save as .mat file for beamforming
@@ -238,6 +246,7 @@ def main():
     parser.add_argument("--chambers", type=int, default=50, help="Number of two chamber models.")
     parser.add_argument("--ellipsoids", type=int, default=50, help="Number of three ellipsoid models.")
     parser.add_argument("--empty_ellipsoid", type=int, default=50, help="Number of empty ellipsoid models.")
+    parser.add_argument("--heart_mesh", type=int, default=24, help="Number of heart mesh models.")
     parser.add_argument("--output_dir", type=str, default="shape_models", help="Base output directory.")
     args = parser.parse_args()
 
@@ -254,6 +263,10 @@ def main():
             "n": args.empty_ellipsoid,
             "save_dir": os.path.join(args.output_dir, "empty_ellipsoid/scatterers")
         },
+        "heart_mesh": {
+            "n": args.heart_mesh,
+            "save_dir": os.path.join(args.output_dir, "heart_mesh/scatterers")
+        }
     }
 
     # Create directories if not exist
@@ -272,6 +285,18 @@ def main():
     for i in range(config["empty_ellipsoid"]["n"]):
         print(f"[Empty Ellipsoids] Generating model {i+1}/{config['empty_ellipsoid']['n']}")
         generate_empty_ellipsoid_model(i, config["empty_ellipsoid"]["save_dir"])
+
+    heart_mesh_dir = "shape_models/heart_mesh/vtk_files" 
+    vtk_files = sorted(glob.glob(os.path.join(heart_mesh_dir, "*.vtk")))
+    if not vtk_files:
+        print(f"No .vtk files found in {heart_mesh_dir}")
+    else:
+        num_to_process = min(args.heart_mesh, len(vtk_files))
+        print(f"[Heart Mesh] Found {len(vtk_files)} files, processing {num_to_process} of them.")
+        
+        for i, vtk_file in enumerate(vtk_files[:num_to_process]):
+            print(f"[Heart Mesh] Processing file {i+1}/{num_to_process}: {os.path.basename(vtk_file)}")
+            generate_mesh(vtk_file, i, config["heart_mesh"]["save_dir"])
 
     print("All scatterer datasets generated successfully.")
 

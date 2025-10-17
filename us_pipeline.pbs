@@ -17,7 +17,7 @@ conda activate newEnv
 
 # Generate the scatterers from different models, especify the amount ot shapes to generate. For meshes and foreground scatterers, the number is already set. For Heart mesh, the maximum is 24.
 echo "Generating scatterers..."
-python generate_scatterers.py --chambers 50 --ellipsoids 50 --empty_ellipsoid 50
+python generate_scatterers.py --chambers 50 --ellipsoids 50 --empty_ellipsoid 50 --heart_mesh 0
 
 # Generate the raw I/Q data with 9 DWs and 81DWs from the scatterers
 echo "Generating I/Q data..."
