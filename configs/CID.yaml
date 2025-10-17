@@ -1,10 +1,10 @@
 model:
   name: CIDNet3D
-  args: {} # No specific args for now
+  args: {} 
 
 dataset:
-  train_path: /home/vasquez/python_part/dataset_creation/results/dataset_hr_train.h5
-  test_path: /home/vasquez/python_part/dataset_creation/results/dataset_hr_test.h5
+  train_path: dataset/*train.h5
+  test_path: dataset/*test.h5
   normalization: std
   patch_size: null
   mode: train
@@ -18,7 +18,7 @@ dataloader:
   drop_last: true
 
 training:
-  epochs: 10
+  epochs: 5
   patience: 7
   learning_rate: 1.0e-4
   min_lr: 0.1e-6
@@ -37,6 +37,6 @@ training:
 wandb:
   entity: paolavasquez98
   project: us_reconstruction
-  dir: /home/vasquez/python_part/beamforming/wandb_logs
-  group: yaml_experiments
+  dir: logs/wandb_logs
+  group: experiments
   save_code: true

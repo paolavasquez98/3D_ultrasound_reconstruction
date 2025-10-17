@@ -17,7 +17,7 @@ conda activate newEnv
 
 # Generate the scatterers from different models, especify the amount ot shapes to generate. For meshes and foreground scatterers, the number is already set. For Heart mesh, the maximum is 24.
 echo "Generating scatterers..."
-python generate_scatterers.py --chambers 50 --ellipsoids 50 --empty_ellipsoid 50 --heart_mesh 24
+python generate_scatterers.py --chambers 50 --ellipsoids 50 --empty_ellipsoid 50
 
 # Generate the raw I/Q data with 9 DWs and 81DWs from the scatterers
 echo "Generating I/Q data..."
@@ -31,4 +31,4 @@ python create_dataset.py --num_files 8
 
 # Deep learning training and testing
 echo "Training and testing the model..."
-python train_nn.py --config_path configs/Unet.yaml > logs/train_output.log 2>&1
+python train_nn.py --no_wandb --config_path configs/Unet.yaml > logs/train_output.log 2>&1

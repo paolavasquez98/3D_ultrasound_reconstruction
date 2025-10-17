@@ -2,7 +2,6 @@ import sys
 import os
 import torch
 import yaml
-import wandb
 import numpy as np
 import random
 import argparse
@@ -25,6 +24,7 @@ def train_function():
         parser = argparse.ArgumentParser(description="Train a complex model using a config file.")
         parser.add_argument('--config_path', type=str, required=True,
                             help='Path to the YAML configuration file.')
+        parser.add_argument('--no_wandb', action='store_true', help='Disable wandb logging')
         args = parser.parse_args()
 
         # --- Load configuration ---
@@ -39,16 +39,26 @@ def train_function():
         timestamp = datetime.now().strftime("%m%d%H%M")
         auto_name = f"{config['model']['name']}_{timestamp}"
 
-        wandb.init(
-            project=config['wandb']['project'], # Or get from base_config: base_config.get('wandb', {}).get('project')
-            entity=config['wandb']['entity'],    # Or get from base_config
-            dir=config['wandb']['dir'], # Or get from base_config
-            name= auto_name,
-            job_type=config['wandb']['job_type'],
-            group=config['wandb'].get('group'),
-            config=base_config, # This sets initial values/defaults
-            save_code=True,
-        )
+        use_wandb = not args.no_wandb and base_config.get('wandb', {}).get('enabled', True)
+        if use_wandb:
+            import wandb
+            wandb.init(
+                project=config['wandb']['project'], # Or get from base_config: base_config.get('wandb', {}).get('project')
+                entity=config['wandb']['entity'],    # Or get from base_config
+                dir=config['wandb']['dir'], # Or get from base_config
+                name= auto_name,
+                job_type=config['wandb']['job_type'],
+                group=config['wandb'].get('group'),
+                config=base_config, # This sets initial values/defaults
+                save_code=True,
+            )
+        else:
+            class DummyWandb:
+                def __getattr__(self, name):
+                    return lambda *a, **kw: None
+                config = {}
+                run = None
+            wandb = DummyWandb()
 
         config = wandb.config
         mutable_config = dict(wandb.config)

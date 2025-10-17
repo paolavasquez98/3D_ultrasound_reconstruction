@@ -39,5 +39,5 @@ wandb:
   project: us_reconstruction
   dir: logs/wandb_logs
   job_type: train-test
-  group: yaml_experiments
+  group: experiments
   save_code: true
