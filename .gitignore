@@ -1,3 +1,4 @@
 logs/
 shape_models/heart_mesh/vtk_files
 shape_models/heart_mesh/scatterers
+shape_models/mri/scatterers
