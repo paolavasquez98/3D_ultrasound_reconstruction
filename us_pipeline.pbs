@@ -1,8 +1,8 @@
 #!/bin/sh
 #PBS -N scat
-#PBS -l nodes=1:ppn=1
+#PBS -l nodes=1:gpu48:ppn=1:gpus=1 
 #PBS -l mem=32gb  
-#PBS -l walltime=20:00:00 
+#PBS -l walltime=200:00:00 
 #PBS -o logs/log.log  #  output log
 #PBS -e logs/error.log   # Error log
 #PBS -m ae 
