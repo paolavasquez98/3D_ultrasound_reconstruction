@@ -49,13 +49,12 @@ def select_random_paired_files(folder_paths, num_files_per_folder=None):
             print(f"No valid pairs found in {folder}.")
             continue
 
-        # Check if there are fewer pairs than requested
-        if len(complete_pairs) < num_files_per_folder:
-            print(f"Warning: Folder {folder} has only {len(complete_pairs)} valid pairs out of requested {num_files_per_folder}.")
-
         # Randomly select the specified number of pairs
         random.seed(42)
         if num_files_per_folder is not None:
+            # Check if there are fewer pairs than requested
+            if len(complete_pairs) < num_files_per_folder:
+                print(f"Warning: Folder {folder} has only {len(complete_pairs)} valid pairs out of requested {num_files_per_folder}.")
             selected_pairs = random.sample(complete_pairs, min(num_files_per_folder, len(complete_pairs)))
         else:
             selected_pairs = complete_pairs

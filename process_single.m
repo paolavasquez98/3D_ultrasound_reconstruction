@@ -200,37 +200,46 @@ function process_single(scatterer_path, out_fig_dir, out_file_dir, mode)
     save(fullfile(out_file_dir, [scatterer_name, '_dwi.mat']), 'dwi_beamf');
     fprintf("DWI data saved from  %s\n", scatterer_name);
 
-
-    figure2 = figure('Visible', 'off');
-    subplot(211)
-    imagesc(x, z, squeeze(abs(sum(dwi_beamf(:,:,:,iy))))); axis image
-    title("Side view")
-    subplot(212)
-    imagesc(y, x, squeeze(abs(sum(dwi_beamf(:,iz,:,:))))); axis image
-    title("Top view")
-    saveas(figure2, fullfile(out_fig_dir, [scatterer_name, '_beamform.png']));
-    close(figure2);
-    fprintf("Image 2 saved from  %s\n", scatterer_name)
-
     % save target dws
     %fprintf('Size of dwi_beamf_HR %s\n', size(dwi_beamf_HR));
     save(fullfile(out_file_dir, [scatterer_name, '_tar.mat']), 'dwi_beamf_HR');
     fprintf("CF data saved\n");
 
-    figure3 = figure('Visible', 'off');
-    subplot(211)
-    side = squeeze(abs(dwi_beamf_HR(:,:,iy)));
-    side = max(side, -60);
-    imagesc(x, z, side); axis image
-    title("Side view")
-    subplot(212)
-    top = squeeze(abs(dwi_beamf_HR(iz,:,:)));
-    top = max(top, -60);
-    imagesc(y, x, top); axis image
-    title("Top view")
-    saveas(figure3, fullfile(out_fig_dir, [scatterer_name, '_tar.png']));
-    close(figure3);
-    fprintf("Image 3 saved from  %s\n", scatterer_name)
+    figure2 = figure('Visible', 'off');
+    dyn_range = [-60 0];   % dB dynamic range
+    eps_val = 1e-10;  
+
+    subplot(221)
+    side_9 = squeeze(abs(sum(dwi_beamf(:,:,:,iy))));
+    side_9_dB = 20*log10(side_9 / max(side_9(:)+eps_val));
+    imagesc(x, z, side_9_dB, dyn_range); colormap('gray');
+    axis image; caxis(dyn_range);
+    title("Side view - 9DWs");
+
+    subplot(223)
+    top_9 = squeeze(abs(sum(dwi_beamf(:,iz,:,:))));
+    top_9_dB = 20*log10(top_9 / max(top_9(:)+eps_val));
+    imagesc(y, x, top_9_dB, dyn_range); colormap('gray');
+    axis image; caxis(dyn_range);
+    title("Top view - 9DWs");
+
+    subplot(222)
+    side_81 = squeeze(abs(dwi_beamf_HR(:,:,iy)));
+    side_81_dB = 20*log10(side_81 / max(side_81(:)+eps_val));
+    imagesc(x, z, side_81_dB, dyn_range); colormap('gray');
+    axis image; caxis(dyn_range);
+    title("Side view - 81DWs");
+
+    subplot(224)
+    top_81 = squeeze(abs(dwi_beamf_HR(iz,:,:)));
+    top_81_dB = 20*log10(top_81 / max(top_81(:)+eps_val));
+    imagesc(y, x, top_81_dB, dyn_range); colormap('gray');
+    axis image; caxis(dyn_range);
+    title("Top view - 81DWs");
+
+    saveas(figure2, fullfile(out_fig_dir, [scatterer_name, '_beamform.png']));
+    close(figure2);
+    fprintf("Image 2 saved from  %s\n", scatterer_name)
 
     elapsed_time = toc;
     hours = floor(elapsed_time / 3600);

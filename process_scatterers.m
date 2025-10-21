@@ -1,4 +1,4 @@
-function process_scatterers(scatterer_idx, mode)
+function process_scatterers(mode)
     % mode can be 'fg', 'mri', 'empty_ellip', 'mesh', 'three_ellip', 'two_chambers'
     % can be used to generate one type of files as:
     % process_scatterers('fg') to process all files in fg mode
@@ -7,20 +7,16 @@ function process_scatterers(scatterer_idx, mode)
 
     addpath('US_toolbox/Beamforming/');
     addpath('gpuSTA/convolution3D_FFTdomain/');
-    addpath('gpuSTA/convolution3D_FFTdomain/');
     addpath('gpuSTA/functions/');
     addpath('MUST/');
-    addpath('mat_loops/');
 
-    base = 'shapes_models'
+    base = 'shape_models';
     all_modes = {'fg', 'mri', 'empty_ellip', 'mesh', 'three_ellip', 'two_chambers'};
 
     % parse
     if nargin < 1
         error('Usage: process_scatterers(''mode'') or process_scatterers(''mode'', idx)');
     end
-
-    mode = varargin{1};
 
     if strcmp(mode, 'all')
         for m = 1:numel(all_modes)
@@ -75,7 +71,8 @@ function process_scatterers(scatterer_idx, mode)
     % Get files
     scatterer_files = dir(fullfile(scatterer_dir, pattern));
     if isempty(scatterer_files)
-        error('No files found for pattern %s in %s', pattern, scatterer_dir);
+        warning('No files found for pattern %s in %s', pattern, scatterer_dir);
+        return
     end
 
     idx_list = 1:numel(scatterer_files);

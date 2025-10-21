@@ -3,8 +3,8 @@ model:
   args: {} # No specific args for now
 
 dataset:
-  train_path: dataset/*train.h5
-  test_path: dataset/*test.h5
+  train_path: dataset/data_train.h5
+  test_path: dataset/data_test.h5
   normalization: std
   patch_size: null
   mode: train
@@ -31,7 +31,7 @@ training:
     eta_min: ${training.min_lr}
   criterion: ComplexMSETVLoss
   criterion_args:
-    tv_weight: 0.01
+    tv_weight: 0.1
   accumulation_steps: 2
 
 wandb:

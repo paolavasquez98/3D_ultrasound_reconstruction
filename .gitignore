@@ -1,4 +1,7 @@
 logs/
-shape_models/heart_mesh/vtk_files
-shape_models/heart_mesh/scatterers
-shape_models/mri/scatterers
+shape_models/
+MUST/
+US_toolbox/
+gpuSTA/
+dataset/
+src/__pycache__/
