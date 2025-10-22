@@ -17,6 +17,7 @@ from dataset import BeamformDataset
 from utils import get_loss_by_name, get_model_by_name, resolve_config_references, get_scheduler_by_name, load_best_model_if_exists
 from training import train_and_validate
 from testing import test_model
+from safe_wandb import WandbWrapper
 
 # --- Argparse for config file ---
 def train_function():
@@ -28,45 +29,22 @@ def train_function():
         args = parser.parse_args()
 
         # --- Load configuration ---
-        base_config = {}
         if args.config_path:
             with open(args.config_path, 'r') as f:
                 base_config = yaml.safe_load(f)
-
-        config = resolve_config_references(base_config)
-
-        # Generate a timestamped name
-        timestamp = datetime.now().strftime("%m%d%H%M")
-        auto_name = f"{config['model']['name']}_{timestamp}"
-
-        use_wandb = not args.no_wandb and base_config.get('wandb', {}).get('enabled', True)
-        if use_wandb:
-            import wandb
-            wandb.init(
-                project=config['wandb']['project'], # Or get from base_config: base_config.get('wandb', {}).get('project')
-                entity=config['wandb']['entity'],    # Or get from base_config
-                dir=config['wandb']['dir'], # Or get from base_config
-                name= auto_name,
-                job_type=config['wandb']['job_type'],
-                group=config['wandb'].get('group'),
-                config=base_config, # This sets initial values/defaults
-                save_code=True,
-            )
         else:
-            class DummyWandb:
-                def __getattr__(self, name):
-                    return lambda *a, **kw: None
-                config = {}
-                run = None
-            wandb = DummyWandb()
+            raise ValueError("--config_path is required")
 
-        config = wandb.config
-        mutable_config = dict(wandb.config)
-        # Resolve references in config
-        resolved_config = resolve_config_references(mutable_config)
-        # Update wandb.config with the resolved values
-        wandb.config.update(resolved_config, allow_val_change=True)
-        config = wandb.config
+        # Resolve references
+        resolved_config = resolve_config_references(base_config)
+
+        # Use the wadb wrapper to make it online or offline
+        use_wandb = not args.no_wandb and os.getenv("WANDB_API_KEY") is not None
+        wandb_wrap = WandbWrapper(resolved_config, use_wandb=use_wandb, project=resolved_config['wandb']['project'])
+
+
+        # Keep a separate config variable for code logic
+        config = resolved_config
 
         # Set seeds for reproducibility
         seed = config.get('seed', 42)       
@@ -123,7 +101,7 @@ def train_function():
 
         model_params = sum(p.numel() for p in model.parameters())
 
-        wandb.config.update({
+        wandb_wrap.log({
             "optimizer_class_name": optimizer.__class__.__name__,
             "loss_class_name": criterion.__class__.__name__,
             "architecture_class_name": model.__class__.__name__,
@@ -132,19 +110,21 @@ def train_function():
             "train_data_size": len(train_data),
             "val_data_size": len(val_data),
             "data_basename": os.path.basename(config['dataset']['train_path']),
-        }, allow_val_change=True)
+        })
 
-        wandb.watch(model, log="all", log_freq=100)
+        if wandb_wrap.active:
+            wandb_wrap.watch(model, log="all", log_freq=100)
 
         print("All configurations loaded and logged to wandb")
 
         # Train and Validate
         training_results, best_model_path = train_and_validate(
             model, train_dataloader, val_dataloader, optimizer, criterion, scheduler,
-            config['training']['epochs'], device, config['training']['patience']
+            config['training']['epochs'], device, config['training']['patience'],
+            wandb_wrap=wandb_wrap 
         )
 
-        print(f"Experiment configuration saved to wandb: {wandb.run.dir}")
+        print(f"Experiment configuration saved to wandb: {wandb_wrap.local_dir}")
 
         # ---------------------- Testing ---------------------
         test_dataset = BeamformDataset(
@@ -162,22 +142,23 @@ def train_function():
         load_best_model_if_exists(model, best_model_path, device)
 
         loss, psnr, ssim, input_vols, output_vols, target_vols = test_model(
-            model, test_dataloader, criterion, device, config['dataset']['normalization']
+            model, test_dataloader, criterion, device, config['dataset']['normalization'],
+            wandb_wrap=wandb_wrap 
         )
-        wandb.finish() 
+        wandb_wrap.finish() 
 
     except Exception as e:
         print(f"An unexpected error occurred: {type(e).__name__}: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
 
-        if wandb.run:
+        if wandb_wrap.active and wandb_wrap.run:
             error_details = f"An unhandled error occurred: {type(e).__name__}: {e}\n\nTraceback:\n{traceback.format_exc()}"
-            wandb.run.alert(
+            wandb_wrap.run.alert(
                 title="Experiment Failed",
                 text=error_details,
-                level=wandb.AlertLevel.ERROR
+                level=wandb_wrap.AlertLevel.ERROR
             )
-            wandb.finish(exit_code=1)
+            wandb_wrap.finish()
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -5,3 +5,5 @@ US_toolbox/
 gpuSTA/
 dataset/
 src/__pycache__/
+runs/
+checkpoints/

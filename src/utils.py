@@ -7,7 +7,7 @@ from sklearn.feature_selection import mutual_info_regression
 from processing import compress_iq
 import torch.nn as nn
 import os
-from model import CNN_nn, Unet3Dcx, CIDNet3D, CNN_AMU, CIDNet3D_L, CxUnet_RB
+from model import CIDNet3D, CxUnet_RB
 
 
 
@@ -197,12 +197,12 @@ def load_best_model_if_exists(model, path, device):
 
 def get_model_by_name(name):
     models = {
-        "CNN_nn": CNN_nn,
-        "Unet3Dcx": Unet3Dcx,
+        # "CNN_nn": CNN_nn,
+        # "Unet3Dcx": Unet3Dcx,
         "CIDNet3D": CIDNet3D,
         "CxUnet_RB": CxUnet_RB,
-        "CIDNet3D_L": CIDNet3D_L, 
-        "CNN_AMU": CNN_AMU,
+        # "CIDNet3D_L": CIDNet3D_L, 
+        # "CNN_AMU": CNN_AMU,
     }
     model_class = models.get(name)
     if model_class is None:

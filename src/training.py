@@ -1,6 +1,5 @@
 import torch
 import os
-import wandb
 import numpy as np
 from tqdm import tqdm
 from utils import get_psnr, get_ssim
@@ -86,11 +85,14 @@ def validate(model, val_loader, criterion, device):
 
 
 # FULL TRAINING FUNCTION
-def train_and_validate(model, train_loader, val_loader, optimizer, criterion, scheduler, epochs, device, patience):
+def train_and_validate(model, train_loader, val_loader, optimizer, criterion, scheduler, epochs, device, patience, wandb_wrap):
     best_val_loss = float("inf")  # Initialize with a high value
-    best_model_path = os.path.join(wandb.run.dir, 'best_model.pth')
+    best_model_path = os.path.join(wandb_wrap.local_dir, "best_model.pth")
+
     early_stopping_counter = 0
     best_image_logs = []
+    best_psnr, best_ssim = 0, 0
+
     for epoch in range(1, epochs + 1):
         print(f"\nEpoch {epoch}/{epochs}")
         
@@ -99,7 +101,7 @@ def train_and_validate(model, train_loader, val_loader, optimizer, criterion, sc
         scheduler.step()
 
         # Log everything to wandb
-        wandb.log({
+        wandb_wrap.log({
             "epoch": epoch,
             "train_loss": train_loss,
             "val_loss": val_loss,
@@ -109,39 +111,27 @@ def train_and_validate(model, train_loader, val_loader, optimizer, criterion, sc
 
         print(f"Epoch {epoch}: Train Loss = {train_loss:.6f}, Val Loss = {val_loss:.6f}, PSNR = {avg_psnr:.2f} dB, SSIM = {avg_ssim:.3f}")
         if val_loss < best_val_loss:
-            # Save images 
+            best_val_loss, best_psnr, best_ssim = val_loss, avg_psnr, avg_ssim
+            early_stopping_counter = 0  # Reset counter
+
+            # Save images only when online mode
             best_image_logs = image_logs[:5]  # Save for later
             image_logs = []  # Clear after saving, to avoid old data mixing
             for i, img_dict in enumerate(best_image_logs):
-                wandb.log({
-                    f"BestSample_E{epoch}_#{i}": [
-                        wandb.Image(img_dict["log_image"], caption="Log compressed")
-                        ]
-                    })
+                wandb_wrap.log_image(f"BestSample_#{i}", img_dict["log_image"], caption="Log compressed")
 
             print(f"New best model found at epoch {epoch} with Val Loss: {val_loss:.6f}")
-            best_val_loss = val_loss
-            best_psnr = avg_psnr
-            best_ssim = avg_ssim
             # Save the best model
             torch.save(model.state_dict(), best_model_path)
             print(f"Best model saved to {best_model_path}")
-            wandb.save(best_model_path)  # optional: upload model to wandb
-            wandb.config.update({"best_model_path": best_model_path})
-            artifact = wandb.Artifact(f"{wandb.run.name}-best-model", type="model")
-            artifact.add_file(best_model_path)
-            wandb.log_artifact(artifact)
-
-            wandb.run.summary["best_val_loss"] = best_val_loss
-            wandb.run.summary["best_psnr"] = best_psnr
-            wandb.run.summary["best_ssim"] = best_ssim
+            wandb_wrap.save(best_model_path)  # optional: upload model to wandb
+            wandb_wrap.log_summary({"best_val_loss": best_val_loss, "best_psnr": best_psnr, "best_ssim": best_ssim})
             print(f"\nBest Val Loss: {best_val_loss:.6f} | PSNR: {best_psnr:.2f} dB | SSIM: {best_ssim:.3f}")
-            early_stopping_counter = 0  # Reset counter
+            
         else:
             early_stopping_counter += 1
             print(f"No improvement in validation loss. Early stopping counter: {early_stopping_counter}/{patience}")
             if early_stopping_counter >= patience:
-                wandb.run.summary["stopped_epoch"] = epoch
                 print(f"Stopping early after {epoch} epochs due to no improvement.")
                 break
 

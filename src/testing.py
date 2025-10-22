@@ -5,10 +5,9 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from utils import get_psnr, get_ssim
 from processing import compress_iq, mu_law_expand
-from training_pb import sliding_window_inference
 from plotting import plot_input_pred_tar, plot_input_pred_3axis, plot_input_pred
 
-def test_model(model, dataloader, criterion, device, norm_method):
+def test_model(model, dataloader, criterion, device, norm_method, wandb_wrap):
     model.eval()  # Set model to evaluation mode
     running_loss = 0.0
     psnr_values, ssim_values = [], []
@@ -83,19 +82,17 @@ def test_model(model, dataloader, criterion, device, norm_method):
                 psnr=np.mean(psnr_values),
                 ssim=np.mean(ssim_values)
         )
-            wandb.log({
+            wandb_wrap.log({
                 "test_loss_mse": loss,
                 "test_psnr": psnr_value,
                 "test_ssim": ssim_value
             })
 
     for i, img_dict in enumerate(image_logs):
-        wandb.log({
-            f"Sample_{i}": [
-                wandb.Image(img_dict["image"], caption="Input/Prediction/GT (raw)"),
-                wandb.Image(img_dict["log_image"], caption="Log compressed"),
-            ]
-        })
+        wandb_wrap.log_image(
+            f"Sample_{i}",
+                # img_dict["image"], caption="Input/Prediction/GT (raw)"),
+                image_logs["log_image"], caption="Log compressed")
 
     avg_psnr = np.mean(psnr_values)
     avg_ssim = np.mean(ssim_values)
