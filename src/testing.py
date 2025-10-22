@@ -62,7 +62,7 @@ def test_model(model, dataloader, criterion, device, norm_method, wandb_wrap):
 
                 # Save slices for visualization
                 image_logs.append({
-                "image": img,
+                # "image": img,
                 "log_image": log_img,
                 # "gamma_image": gamma_img
                 })
@@ -90,9 +90,7 @@ def test_model(model, dataloader, criterion, device, norm_method, wandb_wrap):
 
     for i, img_dict in enumerate(image_logs):
         wandb_wrap.log_image(
-            f"Sample_{i}",
-                # img_dict["image"], caption="Input/Prediction/GT (raw)"),
-                image_logs["log_image"], caption="Log compressed")
+            f"Sample_{i}", img_dict["log_image"], caption="Log compressed")
 
     avg_psnr = np.mean(psnr_values)
     avg_ssim = np.mean(ssim_values)
