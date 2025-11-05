@@ -178,6 +178,7 @@ function process_single(scatterer_path, out_fig_dir, out_file_dir, mode)
     z = linspace(50,150,192);
     % Get middle slices
     iy = round(length(y)/2); 
+    ix = round(length(x)/2); 
     iz = round(find(z >= 100, 1));
 
     transmit_positions=[vs.x vs.y -vs.z];
@@ -209,33 +210,45 @@ function process_single(scatterer_path, out_fig_dir, out_file_dir, mode)
     dyn_range = [-60 0];   % dB dynamic range
     eps_val = 1e-10;  
 
-    subplot(221)
-    side_9 = squeeze(abs(sum(dwi_beamf(:,:,:,iy))));
-    side_9_dB = 20*log10(side_9 / max(side_9(:)+eps_val));
-    imagesc(x, z, side_9_dB, dyn_range); colormap('gray');
-    axis image; caxis(dyn_range);
-    title("Side view - 9DWs");
-
-    subplot(223)
-    top_9 = squeeze(abs(sum(dwi_beamf(:,iz,:,:))));
-    top_9_dB = 20*log10(top_9 / max(top_9(:)+eps_val));
-    imagesc(y, x, top_9_dB, dyn_range); colormap('gray');
+    env_dwi = squeeze(abs(sum(dwi_beamf, 1)));
+    dwi_log = 20*log10(env_dwi / (max(env_dwi(:))+eps_val));
+    subplot(231)
+    top = squeeze(dwi_log(iz,:,:));
+    imagesc(y, x, top, dyn_range); colormap('turbo');
     axis image; caxis(dyn_range);
     title("Top view - 9DWs");
 
-    subplot(222)
-    side_81 = squeeze(abs(dwi_beamf_HR(:,:,iy)));
-    side_81_dB = 20*log10(side_81 / max(side_81(:)+eps_val));
-    imagesc(x, z, side_81_dB, dyn_range); colormap('gray');
+    subplot(232)
+    side = squeeze(dwi_log(:,iy,:));
+    imagesc(x, z, side, dyn_range); colormap('turbo');
+    axis image; caxis(dyn_range);
+    title("Side view - 9DWs");
+
+    subplot(233)
+    side = squeeze(dwi_log(:,:,ix));
+    imagesc(y, z, side, dyn_range); colormap('turbo');
+    axis image; caxis(dyn_range);
+    title("Side view - 9DWs");
+
+    env_tar = abs(dwi_beamf_HR);
+    tar_log = 20*log10(env_tar / (max(env_tar(:))+eps_val));
+    subplot(234)
+    top = squeeze(tar_log(iz,:,:));
+    imagesc(y, x, top, dyn_range); colormap('turbo');
+    axis image; caxis(dyn_range);
+    title("Top view - 81DWs");
+
+    subplot(235)
+    side = squeeze(tar_log(:,iy,:));
+    imagesc(x, z, side, dyn_range); colormap('turbo');
     axis image; caxis(dyn_range);
     title("Side view - 81DWs");
 
-    subplot(224)
-    top_81 = squeeze(abs(dwi_beamf_HR(iz,:,:)));
-    top_81_dB = 20*log10(top_81 / max(top_81(:)+eps_val));
-    imagesc(y, x, top_81_dB, dyn_range); colormap('gray');
+    subplot(236)
+    side = squeeze(tar_log(:,:, ix));
+    imagesc(y, z, side, dyn_range); colormap('turbo');
     axis image; caxis(dyn_range);
-    title("Top view - 81DWs");
+    title("Side view - 81DWs");
 
     saveas(figure2, fullfile(out_fig_dir, [scatterer_name, '_beamform.png']));
     close(figure2);
