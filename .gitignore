@@ -7,3 +7,6 @@ dataset/
 src/__pycache__/
 runs/
 checkpoints/
+mri/scatterers/
+scatterers/
+vtk_files/

@@ -24,6 +24,7 @@ training:
   min_lr: 0.1e-6
   optimizer: AdamW
   optimizer_args:
+    lr: ${training.learning_rate}
     weight_decay: 1.0e-4
   scheduler: CosineAnnealingLR
   scheduler_args:
@@ -32,7 +33,6 @@ training:
   criterion: ComplexMSETVLoss
   criterion_args:
     tv_weight: 0.01
-  accumulation_steps: 2
 
 wandb:
   entity: paolavasquez98

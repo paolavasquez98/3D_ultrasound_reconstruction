@@ -1,11 +1,11 @@
 #!/bin/sh
-#PBS -N train
+#PBS -N extract2
 #PBS -l nodes=1:gpu48:ppn=1:gpus=1 
 #PBS -l mem=32gb  
 #PBS -l walltime=20:00:00 
 #PBS -q gpu  # GPU queue
-#PBS -o logs/log.log  #  output log
-#PBS -e logs/error.log   # Error log
+#PBS -o logs/log2.log  #  output log
+#PBS -e logs/error2.log   # Error log
 #PBS -m ae 
 #PBS -M paola.vasquez@creatis.insa-lyon.fr
 
@@ -18,21 +18,21 @@ conda activate newEnv
 
 # Get other sources for the data generation
 # echo "Getting extra data..."
-# python get_extra_data.py
+# python -u get_extra_data.py
 
-# Generate the scatterers from different models, especify the amount ot shapes to generate. For meshes and foreground scatterers, the number is already set. For Heart mesh, the maximum is 24.
-# echo "Generating scatterers..."
-# python generate_scatterers.py --chambers 50 --ellipsoids 50 --empty_ellipsoid 50 --heart_mesh 24
+Generate the scatterers from different models, especify the amount ot shapes to generate. For meshes and foreground scatterers, the number is already set. For Heart mesh, the maximum is 24.
+echo "Generating scatterers..."
+python generate_scatterers.py --chambers 50 --ellipsoids 50 --empty_ellipsoid 50 --heart_mesh 24
 
 # Generate the raw I/Q data with 9 DWs and 81DWs from the scatterers
-# echo "Generating I/Q data..."
-# for mode in empty_ellip three_ellip mesh two_chambers; do
-#   matlab -nodisplay -nosplash -batch "process_scatterers('$mode')" > logs/beamform_${mode}.log 2>&1
-# done
+echo "Generating I/Q data..."
+for mode in empty_ellip three_ellip mesh two_chambers; do
+  matlab -nodisplay -nosplash -batch "process_scatterers('$mode')" > logs/beamform_${mode}.log 2>&1
+done
 
-# # Create the dataset in a h5 file using the beamformed data. It is posible to specify the number of files to include in the dataset.
-# echo "Creating dataset..."
-# python create_dataset.py 
+# Create the dataset in a h5 file using the beamformed data. It is posible to specify the number of files to include in the dataset.
+echo "Creating dataset..."
+python create_dataset.py 
 
 # Deep learning training and testing
 echo "Training and testing the model..."
